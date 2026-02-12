@@ -3,66 +3,38 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Cosmic Love & Fairy Dust</title>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@300;500&display=swap"
-        rel="stylesheet">
+    <title>Magical Hearts & Fairy Dust</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%);
-            font-family: 'Quicksand', sans-serif;
+            background-color: #02020a;
         }
 
         canvas {
             display: block;
         }
 
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 40px;
-        }
-
         #hint {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
             text-align: center;
-            color: #ffccff;
-            font-size: 16px;
-            letter-spacing: 3px;
-            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
-            opacity: 0.7;
-            animation: pulseText 3s infinite ease-in-out;
+            color: #dcd0ff;
+            font-family: 'Courier New', Courier, monospace;
+            opacity: 0.8;
+            pointer-events: none;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px #a066ff;
             text-transform: uppercase;
-        }
-
-        @keyframes pulseText {
-
-            0%,
-            100% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.05);
-            }
         }
     </style>
 </head>
 
 <body>
 
-    <div id="ui-layer">
-        <div id="hint">✨ Catch a floating heart to reveal a secret ✨</div>
-    </div>
+    <div id="hint">Click the Hearts to see a Secret Message</div>
 
     <script type="importmap">
 {
@@ -80,420 +52,407 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // --- CONFIGURATION & DATA ---
-
-        const MESSAGES = [
-            // Short & Sweet
-            "I like you.", "Stay.", "You matter.", "Text me.", "Always you.",
-            "Soft heart.", "Mine?", "Call me?", "You glow.", "Don’t overthink.",
-            "Forever maybe.", "Still choosing you.", "You feel safe.", "My person.",
-            // Magical & Abstract
-            "Stardust soul.", "Cosmic vibes.", "Serendipity.", "Infinite.",
-            "Dream bigger.", "Pure magic.", "Electric.", "Golden hour.",
-            // Affirmations
-            "You are enough.", "Keep shining.", "Breathe.", "Trust yourself.",
-            "So proud of you.", "Lovely chaos.", "Wild heart.", "Be brave.",
-            // Romantic / Flirty
-            "Thinking of u.", "Miss you.", "Look at you!", "Secret admirer.",
-            "Chemistry.", "Butterflies.", "Eyes on you.", "Wish you were here.",
-            "Let's escape.", "Just us.", "Focus on me.", "Catch me.",
-            "Make a wish.", "Timing is everything.", "Destiny?"
+        const loveNotes = [
+            "I like you.", "Stay.", "You matter.", "Text me.",
+            "Always you.", "Soft heart.", "Mine?", "Call me?",
+            "You glow.", "Don’t overthink.", "Forever maybe.",
+            "Still choosing you.", "You feel safe.", "My person.",
+            "Dreaming.", "Starry eyes.", "Hold tight.", "Infinite.",
+            "Just us.", "Pure magic.", "So lovely.", "Heartbeat.",
+            "Wildflower.", "Moonlight.", "Wish.", "Serendipity."
         ];
 
-        // --- SCENE SETUP ---
-
         const scene = new THREE.Scene();
-        // Add a subtle fog to blend distant objects into the void
-        scene.fog = new THREE.FogExp2(0x050510, 0.015);
+        scene.background = new THREE.Color('#02020a');
+        scene.fog = new THREE.FogExp2(0x02020a, 0.02);
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 40;
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 35);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Performance optimization
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
-        // Controls (Disabled zoom to keep the vibe intact, but allow rotation)
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.enableZoom = false;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.8;
+        controls.autoRotateSpeed = 0.5;
 
         // --- TEXTURES ---
-
-        function createGlowTexture() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            grad.addColorStop(0.3, 'rgba(255, 200, 255, 0.5)');
-            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 64, 64);
-            return new THREE.CanvasTexture(canvas);
-        }
-
-        function createHeartShapeTexture() {
+        function createHeartTexture() {
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
             const ctx = canvas.getContext('2d');
             ctx.translate(64, 64); ctx.scale(1, -1);
-            ctx.fillStyle = "#ffffff";
+
+            const grad = ctx.createRadialGradient(0, -10, 0, 0, -10, 60);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.4, 'rgba(200, 220, 255, 0.9)');
+            grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = grad;
+
             ctx.beginPath();
             for (let i = 0; i <= Math.PI * 2; i += 0.05) {
                 const x = 16 * Math.pow(Math.sin(i), 3);
                 const y = 13 * Math.cos(i) - 5 * Math.cos(2 * i) - 2 * Math.cos(3 * i) - Math.cos(4 * i);
-                ctx.lineTo(x * 2, y * 2);
+                ctx.lineTo(x * 2.5, y * 2.5);
             }
             ctx.fill();
             return new THREE.CanvasTexture(canvas);
         }
 
-        // High resolution text texture
+        function createSparkleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(32, 32);
+
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
+            grad.addColorStop(0, 'white');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -20); ctx.lineTo(4, -4); ctx.lineTo(20, 0);
+            ctx.lineTo(4, 4); ctx.lineTo(0, 20); ctx.lineTo(-4, 4);
+            ctx.lineTo(-20, 0); ctx.lineTo(-4, -4);
+            ctx.fill();
+            return new THREE.CanvasTexture(canvas);
+        }
+
         function createTextTexture(text) {
             const canvas = document.createElement('canvas');
-            // Large dimensions for crisp text
             canvas.width = 1024; canvas.height = 256;
             const ctx = canvas.getContext('2d');
 
-            // Font styling
-            ctx.font = "400 90px 'Pacifico', cursive"; // Using the imported font
+            ctx.font = "bold 85px 'Arial', sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // Glow effect behind text
-            ctx.shadowColor = "#ff00aa";
-            ctx.shadowBlur = 30;
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.lineWidth = 12;
+            ctx.strokeText(text, 512, 128);
+
+            ctx.shadowColor = "#FF00FF";
+            ctx.shadowBlur = 15;
             ctx.fillStyle = "#ffffff";
             ctx.fillText(text, 512, 128);
 
-            // Slight stroke for readability
-            ctx.strokeStyle = "rgba(255,200,255,0.5)";
+            ctx.strokeStyle = "#ffffff";
             ctx.lineWidth = 2;
             ctx.strokeText(text, 512, 128);
 
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            return tex;
+            return new THREE.CanvasTexture(canvas);
         }
 
-        const particleTex = createGlowTexture();
-        const heartTex = createHeartShapeTexture();
+        const heartTexture = createHeartTexture();
+        const sparkleTexture = createSparkleTexture();
 
-        // --- OBJECTS ---
+        // --- NEBULA (STARS) ---
+        const nebulaGeo = new THREE.BufferGeometry();
+        const count = 4000;
+        const pos = new Float32Array(count * 3);
+        const cols = new Float32Array(count * 3);
+        const colors = [new THREE.Color('#80c7ff'), new THREE.Color('#cdb4db'), new THREE.Color('#bde0fe')];
 
-        // 1. The Central Heart Nebula (Point Cloud)
-        const nebulaGeometry = new THREE.BufferGeometry();
-        const nebulaCount = 3500;
-        const nebulaPos = new Float32Array(nebulaCount * 3);
-        const nebulaColors = new Float32Array(nebulaCount * 3);
-        const nebulaSizes = new Float32Array(nebulaCount);
-
-        const colorPalette = [
-            new THREE.Color('#ff0055'), // Red/Pink
-            new THREE.Color('#ffcc00'), // Gold
-            new THREE.Color('#aa00ff'), // Purple
-            new THREE.Color('#00ccff')  // Cyan
-        ];
-
-        for (let i = 0; i < nebulaCount; i++) {
+        for (let i = 0; i < count; i++) {
             const t = Math.random() * Math.PI * 2;
-            // Heart formula
             let x = 16 * Math.pow(Math.sin(t), 3);
             let y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
 
-            // Scale it down a bit
-            x *= 0.8; y *= 0.8;
+            pos[i * 3] = x + (Math.random() - 0.5) * 6;
+            pos[i * 3 + 1] = y + (Math.random() - 0.5) * 6;
+            pos[i * 3 + 2] = (Math.random() - 0.5) * 80;
 
-            // Add 3D volume (randomness in Z and scatter)
-            const scatter = Math.random() * 2.5;
-            nebulaPos[i * 3] = x + (Math.random() - 0.5) * scatter;
-            nebulaPos[i * 3 + 1] = y + (Math.random() - 0.5) * scatter;
-            nebulaPos[i * 3 + 2] = (Math.random() - 0.5) * 10; // Z depth
-
-            // Random Colors
-            const c = colorPalette[Math.floor(Math.random() * colorPalette.length)];
-            nebulaColors[i * 3] = c.r;
-            nebulaColors[i * 3 + 1] = c.g;
-            nebulaColors[i * 3 + 2] = c.b;
-
-            // Random Sizes
-            nebulaSizes[i] = Math.random() * 1.5;
+            const c = colors[Math.floor(Math.random() * colors.length)];
+            cols[i * 3] = c.r;
+            cols[i * 3 + 1] = c.g;
+            cols[i * 3 + 2] = c.b;
         }
 
-        nebulaGeometry.setAttribute('position', new THREE.BufferAttribute(nebulaPos, 3));
-        nebulaGeometry.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
-        nebulaGeometry.setAttribute('size', new THREE.BufferAttribute(nebulaSizes, 1));
+        nebulaGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        nebulaGeo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
-        // Custom Shader for twinkling points
-        const nebulaMaterial = new THREE.PointsMaterial({
-            size: 0.8,
-            map: particleTex,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            sizeAttenuation: true
-        });
-
-        const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
+        const nebula = new THREE.Points(
+            nebulaGeo,
+            new THREE.PointsMaterial({
+                size: 0.7,
+                map: heartTexture,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            })
+        );
         scene.add(nebula);
 
-        // 2. Floating Clickable Hearts
-        const floatingHearts = new THREE.Group();
-        scene.add(floatingHearts);
+        // --- HEARTS ---
+        const heartGroup = new THREE.Group();
+        scene.add(heartGroup);
 
-        function spawnFloatingHeart() {
-            const mat = new THREE.SpriteMaterial({
-                map: heartTex,
-                color: new THREE.Color().setHSL(Math.random(), 0.8, 0.7),
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const sprite = new THREE.Sprite(mat);
+        const heartMat = new THREE.SpriteMaterial({
+            map: heartTexture,
+            color: 0xffccff,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
 
-            // Spawn in a random sphere around the center
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos((Math.random() * 2) - 1);
-            const radius = 25 + Math.random() * 15;
-
-            sprite.position.x = radius * Math.sin(phi) * Math.cos(theta);
-            sprite.position.y = radius * Math.sin(phi) * Math.sin(theta);
-            sprite.position.z = radius * Math.cos(phi);
-
-            const scale = 1.5 + Math.random();
-            sprite.scale.set(scale, scale, 1);
-
-            // Custom data for animation
-            sprite.userData = {
-                origScale: scale,
-                floatSpeed: 0.02 + Math.random() * 0.03,
-                offset: Math.random() * 100,
-                axis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize()
-            };
-
-            floatingHearts.add(sprite);
+        for (let i = 0; i < 25; i++) {
+            const h = new THREE.Sprite(heartMat.clone());
+            h.position.set(
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 20
+            );
+            h.scale.setScalar(2);
+            h.userData = { offset: Math.random() * 100 };
+            heartGroup.add(h);
         }
 
-        // Initial batch
-        for (let i = 0; i < 30; i++) spawnFloatingHeart();
+        const cursorParticles = [];
+        const rings = [];
+        const effects = [];
 
+        // --- COMET EFFECT LOGIC ---
+        function spawnCometParticle(position) {
+            const sprite = new THREE.Sprite(
+                new THREE.SpriteMaterial({
+                    map: sparkleTexture,
+                    color: new THREE.Color(0xaaccff),
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending
+                })
+            );
 
-        // --- INTERACTION SYSTEMS ---
+            // Slight spread for thickness
+            sprite.position.copy(position).add(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.2,
+                (Math.random() - 0.5) * 0.2,
+                (Math.random() - 0.5) * 0.2
+            ));
+
+            sprite.scale.setScalar(Math.random() * 0.4 + 0.2);
+            scene.add(sprite);
+
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.02,
+                (Math.random() - 0.5) * 0.02,
+                0
+            );
+
+            // Adjusted life for a shorter, snappier tail
+            cursorParticles.push({ mesh: sprite, life: 0.8, velocity: velocity });
+        }
+
+        function spawnShockwave(pos) {
+            const mesh = new THREE.Mesh(
+                new THREE.RingGeometry(0.1, 0.2, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            mesh.position.copy(pos);
+            mesh.lookAt(camera.position);
+            scene.add(mesh);
+            rings.push({ mesh: mesh, scale: 1, opacity: 0.8 });
+        }
+
+        function spawnMagicEffect(pos) {
+            const tex = createTextTexture(
+                loveNotes[Math.floor(Math.random() * loveNotes.length)]
+            );
+
+            const textSprite = new THREE.Sprite(
+                new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })
+            );
+
+            textSprite.position.copy(pos).add(new THREE.Vector3(0, 1.2, 0));
+            textSprite.scale.set(7, 1.75, 1);
+            scene.add(textSprite);
+
+            const pPos = [], pVel = [];
+
+            for (let i = 0; i < 60; i++) {
+                pPos.push(pos.x, pos.y, pos.z);
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                const spd = Math.random() * 0.4 + 0.1;
+
+                pVel.push({
+                    x: spd * Math.sin(phi) * Math.cos(theta),
+                    y: spd * Math.sin(phi) * Math.sin(theta),
+                    z: spd * Math.cos(phi)
+                });
+            }
+
+            const pGeo = new THREE.BufferGeometry();
+            pGeo.setAttribute('position', new THREE.Float32BufferAttribute(pPos, 3));
+
+            const pSys = new THREE.Points(
+                pGeo,
+                new THREE.PointsMaterial({
+                    size: 0.8,
+                    map: sparkleTexture,
+                    color: 0xffdd00,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                })
+            );
+
+            scene.add(pSys);
+            effects.push({ text: textSprite, particles: pSys, pVel: pVel, age: 0 });
+        }
 
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
-        const cursorParticles = [];
-        const activeMessages = [];
+        let currentCursorPos = new THREE.Vector3(0, 0, 0);
+        let lastCursorPos = new THREE.Vector3(0, 0, 0); // Track last position
 
-        // Helper: Spawn explosion particles
-        function spawnExplosion(pos, color) {
-            const particleCount = 20;
-            for (let i = 0; i < particleCount; i++) {
-                const vel = new THREE.Vector3(
-                    (Math.random() - 0.5) * 1.5,
-                    (Math.random() - 0.5) * 1.5,
-                    (Math.random() - 0.5) * 1.5
-                );
-
-                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: particleTex,
-                    color: color,
-                    blending: THREE.AdditiveBlending,
-                    transparent: true
-                }));
-
-                sprite.position.copy(pos);
-                sprite.scale.setScalar(0.5 + Math.random() * 0.5);
-
-                scene.add(sprite);
-
-                // Add to global update list (reuse logic from cursor trails)
-                cursorParticles.push({
-                    mesh: sprite,
-                    velocity: vel,
-                    life: 1.0,
-                    decay: 0.02 + Math.random() * 0.03
-                });
-            }
-        }
-
-        // Mouse Move Logic (Fairy Dust)
         window.addEventListener('mousemove', (e) => {
-            // Normalized Coordinates
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            const x = (e.clientX / window.innerWidth) * 2 - 1;
+            const y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-            // Project point into 3D space near camera for trail
-            const vec = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-            vec.unproject(camera);
-            const dir = vec.sub(camera.position).normalize();
-            const distance = 25; // Distance from camera to spawn dust
-            const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+            const dir = new THREE.Vector3(x, y, 0.5)
+                .unproject(camera)
+                .sub(camera.position)
+                .normalize();
 
-            // Spawn Dust
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: particleTex,
-                color: new THREE.Color().setHSL((Date.now() * 0.001) % 1, 0.8, 0.5),
-                transparent: true,
-                blending: THREE.AdditiveBlending
-            }));
-            sprite.position.copy(pos);
-            sprite.scale.setScalar(0.5);
-            scene.add(sprite);
-
-            cursorParticles.push({
-                mesh: sprite,
-                velocity: new THREE.Vector3(0, 0, 0), // No initial velocity for trail
-                life: 1.0,
-                decay: 0.03
-            });
+            const dist = (10 - camera.position.z) / dir.z;
+            currentCursorPos.copy(camera.position).add(dir.multiplyScalar(dist));
         });
 
-        // Click Logic (Reveal Message)
-        window.addEventListener('pointerdown', (e) => {
+        window.addEventListener('click', (e) => {
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
             raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(heartGroup.children);
 
-            const intersects = raycaster.intersectObjects(floatingHearts.children);
-
-            if (intersects.length > 0) {
-                const hit = intersects[0].object;
-
-                // 1. Explosion Effect
-                spawnExplosion(hit.position, hit.material.color);
-
-                // 2. Show Message
-                const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-                const textTex = createTextTexture(msg);
-                const textSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-                    map: textTex,
-                    transparent: true,
-                    depthTest: false // Always show on top
-                }));
-
-                textSprite.position.copy(hit.position);
-                textSprite.scale.set(8, 2, 1);
-                scene.add(textSprite);
-
-                activeMessages.push({
-                    mesh: textSprite,
-                    life: 3.0, // Seconds on screen
-                    origY: hit.position.y
-                });
-
-                // 3. Respawn the heart elsewhere
+            if (hits.length > 0) {
+                const hit = hits[0].object;
+                spawnMagicEffect(hit.position);
+                spawnShockwave(hit.position);
+                hit.scale.setScalar(0);
                 hit.position.set(
-                    (Math.random() - 0.5) * 60,
-                    (Math.random() - 0.5) * 60,
-                    (Math.random() - 0.5) * 40
+                    (Math.random() - 0.5) * 30,
+                    (Math.random() - 0.5) * 30,
+                    (Math.random() - 0.5) * 20
                 );
-                hit.material.color.setHSL(Math.random(), 0.8, 0.7);
-                hit.scale.setScalar(0); // Animate scale up later
-                hit.userData.origScale = 1.5 + Math.random();
             }
         });
-
-
-        // --- POST PROCESSING ---
 
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
-        // Unreal Bloom for the glowy magical look
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-        bloomPass.threshold = 0.1;
-        bloomPass.strength = 1.2; // Intensity
-        bloomPass.radius = 0.5;
-        composer.addPass(bloomPass);
+        const bloom = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.2,
+            0.5,
+            0.1
+        );
 
-
-        // --- ANIMATION LOOP ---
+        composer.addPass(bloom);
 
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
 
-            const time = clock.getElapsedTime();
-            const delta = clock.getDelta(); // Not used heavily but good practice
-
+            const t = clock.getElapsedTime();
             controls.update();
 
-            // 1. Animate Nebula (Beat & Rotate)
-            // Heartbeat rhythm: fast attack, slow decay
-            const beat = Math.pow(Math.sin(time * 3), 6) * 0.1 + 1;
-            nebula.scale.setScalar(beat);
-            nebula.rotation.z = time * 0.05; // Slow spin
+            nebula.rotation.z = t * 0.02;
 
-            // 2. Animate Floating Hearts
-            floatingHearts.children.forEach(h => {
-                // Bobbing motion
-                h.position.y += Math.sin(time * 2 + h.userData.offset) * 0.01;
-                // Float around center slightly
-                h.position.addScaledVector(h.userData.axis, Math.sin(time * 0.5) * 0.02);
-
-                // Pop-in animation if it was just clicked
-                if (h.scale.x < h.userData.origScale) {
-                    h.scale.addScalar(0.1);
-                }
+            heartGroup.children.forEach(h => {
+                h.position.y += Math.sin(t * 2 + h.userData.offset) * 0.01;
+                if (h.scale.x < 2) h.scale.addScalar(0.05);
             });
 
-            // 3. Animate Cursor/Explosion Particles
+            // --- COMET TAIL FIX ---
+            // Calculate distance moved since last frame
+            const distMoved = currentCursorPos.distanceTo(lastCursorPos);
+
+            // Only spawn if mouse has moved significantly (> 0.01 units)
+            if (distMoved > 0.01) {
+                spawnCometParticle(currentCursorPos);
+                // Interpolate extra particle if moving fast to prevent gaps
+                if (distMoved > 0.5) {
+                    const midPoint = new THREE.Vector3().lerpVectors(lastCursorPos, currentCursorPos, 0.5);
+                    spawnCometParticle(midPoint);
+                }
+                lastCursorPos.copy(currentCursorPos);
+            }
+
+            // --- COMET TAIL UPDATE ---
             for (let i = cursorParticles.length - 1; i >= 0; i--) {
                 const p = cursorParticles[i];
-                p.life -= p.decay;
+                p.life -= 0.05; // Slightly faster fade for consistency
 
-                // Move
                 p.mesh.position.add(p.velocity);
-
-                // Shrink
-                p.mesh.scale.multiplyScalar(0.95);
+                p.mesh.scale.multiplyScalar(0.90);
                 p.mesh.material.opacity = p.life;
 
                 if (p.life <= 0) {
                     scene.remove(p.mesh);
-                    p.mesh.material.dispose(); // Cleanup memory
                     cursorParticles.splice(i, 1);
                 }
             }
 
-            // 4. Animate Messages
-            for (let i = activeMessages.length - 1; i >= 0; i--) {
-                const m = activeMessages[i];
-                m.life -= 0.015; // Fade speed
+            for (let i = rings.length - 1; i >= 0; i--) {
+                const r = rings[i];
+                r.scale += 0.5;
+                r.opacity -= 0.03;
+                r.mesh.scale.setScalar(r.scale);
+                r.mesh.material.opacity = r.opacity;
 
-                // Float Up
-                m.mesh.position.y += 0.03;
+                if (r.opacity <= 0) {
+                    scene.remove(r.mesh);
+                    rings.splice(i, 1);
+                }
+            }
 
-                // Subtle drift
-                m.mesh.position.x += Math.sin(time * 3 + m.origY) * 0.01;
+            for (let i = effects.length - 1; i >= 0; i--) {
+                const eff = effects[i];
+                eff.age++;
 
-                if (m.life < 1.0) {
-                    m.mesh.material.opacity = m.life;
+                eff.text.position.y += 0.005;
+
+                if (eff.age > 150)
+                    eff.text.material.opacity -= 0.03;
+
+                const posAttr = eff.particles.geometry.attributes.position;
+
+                for (let j = 0; j < eff.pVel.length; j++) {
+                    posAttr.array[j * 3] += eff.pVel[j].x;
+                    posAttr.array[j * 3 + 1] += eff.pVel[j].y;
+                    posAttr.array[j * 3 + 2] += eff.pVel[j].z;
+
+                    eff.pVel[j].x *= 0.95;
+                    eff.pVel[j].y *= 0.95;
+                    eff.pVel[j].z *= 0.95;
                 }
 
-                if (m.life <= 0) {
-                    scene.remove(m.mesh);
-                    m.mesh.material.map.dispose();
-                    m.mesh.material.dispose();
-                    activeMessages.splice(i, 1);
+                posAttr.needsUpdate = true;
+                eff.particles.material.opacity = 1 - (eff.age / 100);
+
+                if (eff.age > 180) {
+                    scene.remove(eff.text);
+                    scene.remove(eff.particles);
+                    effects.splice(i, 1);
                 }
             }
 
             composer.render();
         }
 
-        // Handle Resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -502,8 +461,8 @@
         });
 
         animate();
-
     </script>
+
 </body>
 
 </html>
