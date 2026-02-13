@@ -77,6 +77,9 @@
     <div id="hint">Find and Click all the Small Hearts...</div>
     <div id="progress">0 / 0</div>
     <div id="footer">Made with ❤️ by Vinay</div>
+    <audio id="bgMusic" loop>
+        <source src="audio_asset.mp3" type="audio/mpeg">
+    </audio>
 
     <script type="importmap">
 {
@@ -101,10 +104,10 @@
             "My favorite variable.",
             "You Matter a lot.",
             "Still choosing you.",
-            "Wildflower energy.",
+            "A Wildflower energy.",
             "Forever maybe.",
-            "You feel safe.",
-            "Soo cuuuuute.",
+            "You feel like home.",
+            "Soo cute.",
             "You're my peace.",
             "Miss your smile.",
             "My Paracetamol.",
@@ -119,7 +122,7 @@
             "My sweet headache.",
             "Miss beautiful.",
             "Heart-stealing eyes.",
-            "Relax, cutie.",
+            "Thodi maasoom.",
             "Innocently gorgeous.",
         ];
 
@@ -486,6 +489,27 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // --- AUDIO LOGIC ---
+        const audio = document.getElementById('bgMusic');
+        audio.volume = 0.5; // Set volume to 50%
+
+        // Try to play immediately
+        const startAudio = () => {
+            audio.play().catch(err => {
+                console.log("Autoplay prevented:", err);
+            });
+        };
+
+        // Attempt autoplay
+        startAudio();
+
+        // Ensure it plays on first interaction if autoplay failed
+        window.addEventListener('click', () => {
+            if (audio.paused) {
+                startAudio();
+            }
+        }, { once: true });
 
         animate();
     </script>
